@@ -1,0 +1,4 @@
+SchoolOS
+========
+
+SchoolOS is an
