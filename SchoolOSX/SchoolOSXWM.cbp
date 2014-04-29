@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SchoolOSXWM" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/SchoolOSXWM" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="include" />
+					<Add directory="src" />
+				</Compiler>
+				<Linker>
+					<Add library="xcb" />
+					<Add directory="include" />
+					<Add directory="src" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option platforms="Unix;" />
+				<Option output="bin/Release/SchoolOSXWM" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add directory="include" />
+		</Compiler>
+		<Unit filename="include/Data.h" />
+		<Unit filename="include/Desktop.h" />
+		<Unit filename="include/Layout.h" />
+		<Unit filename="include/Monitor.h" />
+		<Unit filename="include/Structures.h" />
+		<Unit filename="include/Tile.h" />
+		<Unit filename="include/Window.h" />
+		<Unit filename="include/xcb_icccm.h" />
+		<Unit filename="src/Desktop.cpp" />
+		<Unit filename="src/Layout.cpp" />
+		<Unit filename="src/Monitor.cpp" />
+		<Unit filename="src/Tile.cpp" />
+		<Unit filename="src/Window.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,74 @@
+# depslib dependency file v1.0
+1398609254 source:/home/pascal/SchoolOSX/src/Monitor.cpp
+	"Monitor.h"
+
+1398609189 /home/pascal/SchoolOSX/include/Monitor.h
+
+1398609259 source:/home/pascal/SchoolOSX/src/Window.cpp
+	"Window.h"
+	"xcb/xcb.h"
+	"xcb_icccm.h"
+
+1398609198 /home/pascal/SchoolOSX/include/Window.h
+	<xcb/xcb_util.h>
+	"Structures.h"
+	"Data.h"
+
+1398609192 /home/pascal/SchoolOSX/include/Structures.h
+	"stdint.h"
+
+1398609183 /home/pascal/SchoolOSX/include/Data.h
+	"xcb/xcb.h"
+	"xcb/xcb_atom.h"
+	"xcb_icccm.h"
+	"xcb/xproto.h"
+	"xcb/xcb_util.h"
+	"stdint.h"
+
+1398543139 /home/pascal/SchoolOSX/include/xcb_icccm.h
+	<xcb/xcb.h>
+
+1398611051 source:/home/pascal/SchoolOSX/src/Desktop.cpp
+	"Desktop.h"
+	"stdio.h"
+	"string.h"
+
+1398611340 /home/pascal/SchoolOSX/include/Desktop.h
+	"Monitor.h"
+	"stdint.h"
+	"Layout.h"
+
+1398609257 source:/home/pascal/SchoolOSX/src/Tile.cpp
+	"Tile.h"
+	<boost/algorithm/string/split.hpp>
+	<boost/algorithm/string/classification.hpp>
+	<iostream>
+	<vector>
+	<stdlib.h>
+	"stdint.h"
+	<sstream>
+
+1398604863 /home/pascal/SchoolOSX/include/Tile.h
+	"Structures.h"
+	<string>
+	<stdlib.h>
+	"iostream"
+
+1398611836 source:/home/pascal/SchoolOSX/src/Layout.cpp
+	"Layout.h"
+	"string.h"
+
+1398611664 /home/pascal/SchoolOSX/include/Layout.h
+	"Tile.h"
+	<fstream>
+	<string>
+	<stdlib.h>
+	"stdint.h"
+	"iostream"
+
+1398611239 source:/home/pascal/SchoolOSX/src/Test.cpp
+	"string.h"
+	"iostream"
+	"stdio.h"
+	<stdlib.h>
+
