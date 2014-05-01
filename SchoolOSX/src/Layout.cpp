@@ -1,6 +1,5 @@
 #include "Layout.h"
 #include "string.h"
-using namespace std;
 
 Layout::Layout(string name)
 {

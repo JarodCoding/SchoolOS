@@ -2,13 +2,18 @@
 #define DESKTOP
 #include "Monitor.h"
 #include "stdint.h"
-#include "Layout.h"
+#include "Structures.h"
 using namespace std;
+class Tile;
+class Layout;
 
 class Desktop
 {
+
     public:
         Desktop(Monitor *monitor,int monitorsize,Layout startLayout);
+        Desktop(int width,int height);
+
         virtual ~Desktop();
     void applyLayout(Layout& layout);
     Layout getCurrentLayout();
@@ -16,11 +21,15 @@ class Desktop
     Monitor *getMonitors();
     int getMonitorArraySize();
     int getTileArraySize();
-    int getWidth();
-    int getHeight();
+    uint16_t getWidth();
+    uint16_t getHeight();
+    void addTile(Tile &tile);
+    uint16_t resizeX(int TileIndex,uint16_t requestedX);
+    uint16_t resizeY(int TileIndex,uint16_t requestedY);
+    uint16_t resizeWidth(int TileIndex,uint16_t requestedWidth);
+    uint16_t resizeHeight(int TileIndex,uint16_t requestedHeight);
 
 
-    protected:
     private:
     uint16_t width;
     uint16_t height;
