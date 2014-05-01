@@ -19,3 +19,9 @@ SchoolAndroid
 =============
 Not started yet :(
 
+Changelog:
+==========
+0.0.0.1
+-------
+test
+
