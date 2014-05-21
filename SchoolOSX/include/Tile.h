@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "iostream"
 #include "Data.h"
+#include <xcb/xcb_util.h>
 
 using namespace std;
 
@@ -29,12 +30,14 @@ class Tile
     void setLocalY(uint16_t y);
     void setLocalWidth(uint16_t width);
     void setLocalHeight(uint16_t height);
-
+    void setHidden(bool hidden);
+    bool isHidden();
+    void focus()
     private:
     struct sizepos position;
     int TileIndex;
-
-
+    xcb_window_t runtime;
+    bool hidden;
 };
 
 #endif // TILE

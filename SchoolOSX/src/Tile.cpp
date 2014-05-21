@@ -7,10 +7,11 @@
 #include "stdint.h"
 #include <sstream>
 #include "Desktop.h"
-
+#include "Data.h"
+using namespace std;
 Tile::Tile()
 {
-    //ctor
+
 }
 
 Tile::~Tile()
@@ -45,31 +46,75 @@ return TileIndex;
 }
 void Tile::setLocalX(uint16_t x){
 position.x = x;
+const static uint32_t values[] = { x };
+xcb_configure_window (connection, runtime, XCB_CONFIG_WINDOW_X, values);
 }
 void Tile::setLocalY(uint16_t y){
 position.y = y;
+const static uint32_t values[] = { y };
+xcb_configure_window (connection, runtime, XCB_CONFIG_WINDOW_Y, values);
 }
 void Tile::setLocalWidth(uint16_t width){
 position.width = width;
+const static uint32_t values[] = { width };
+xcb_configure_window (connection, runtime, XCB_CONFIG_WINDOW_WIDTH, values);
 }
 void Tile::setLocalHeight(uint16_t height){
 position.height = height;
+const static uint32_t values[] = { height};
+xcb_configure_window (connection, runtime, XCB_CONFIG_WINDOW_HEIGHT, values);
 }
 uint16_t Tile::setX(uint16_t x){
 
     setLocalX((*desktop).resizeX(getIndex(),x));
+    xcb_configure_notify_event_t ce;
+    ce.response_type = XCB_CONFIGURE_NOTIFY;
+    ce.event = win;
+    ce.window = win;
+    ce.x = getX();
+    ce.above_sibling = XCB_NONE;
+    ce.override_redirect = false;
+    xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+
+    xcb_flush (connection);
 }
 uint16_t Tile::setY(uint16_t y){
     setLocalY((*desktop).resizeY(getIndex(),y));
+    xcb_configure_notify_event_t ce;
+        ce.response_type = XCB_CONFIGURE_NOTIFY;
+        ce.event = win;
+        ce.window = win;
+        ce.y = getY();
+        ce.above_sibling = XCB_NONE;
+        ce.override_redirect = false;
+        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
 
+    xcb_flush (connection);
 }
 uint16_t Tile::setWidth(uint16_t width){
         setLocalWidth((*desktop).resizeWidth(getIndex(),width));
+        xcb_configure_notify_event_t ce;
+        ce.response_type = XCB_CONFIGURE_NOTIFY;
+        ce.event = win;
+        ce.window = win;
+        ce.width = getWidth();
+        ce.above_sibling = XCB_NONE;
+        ce.override_redirect = false;
+        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
 
+        xcb_flush (connection);
 }
 uint16_t Tile::setHeight(uint16_t height){
         setLocalHeight((*desktop).resizeHeight(getIndex(),height));
-
+        xcb_configure_notify_event_t ce;
+        ce.response_type = XCB_CONFIGURE_NOTIFY;
+        ce.event = win;
+        ce.window = win;
+        ce.height = getHeight();
+        ce.above_sibling = XCB_NONE;
+        ce.override_redirect = false;
+        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+        xcb_flush (connection);
 }
 uint16_t Tile::getX(){
     return position.x;
@@ -82,5 +127,39 @@ uint16_t Tile::getWidth(){
 }
 uint16_t Tile::getHeight(){
     return position.height;
+}
+void Tile::setHidden(bool hidden){
+
+    uint32_t state;
+    if(hidden)state = 0;
+    else state = 1;
+
+    uint32_t data[] = { state, XCB_NONE };
+    xcb_change_property(globalconf.connection, XCB_PROP_MODE_REPLACE, win,
+                        WM_STATE, WM_STATE, 32, 2, data);
+
+
+    this.hidden = hidden;
+
+}
+bool Tile::isHidden(){
+    return hidden;
+}
+void Tile::focus()
+{
+    xcb_client_message_event_t ev;
+
+    /* Initialize all of event's fields first */
+    p_clear(&ev, 1);
+
+    ev.response_type = XCB_CLIENT_MESSAGE;
+    ev.window = win;
+    ev.format = 32;
+    ev.data.data32[1] = globalconf.timestamp;
+    ev.type = WM_PROTOCOLS;
+    ev.data.data32[0] = WM_TAKE_FOCUS;
+
+    xcb_send_event(globalconf.connection, false, win,
+                   XCB_EVENT_MASK_NO_EVENT, (char *) &ev);
 }
 

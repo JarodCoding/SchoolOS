@@ -5,6 +5,7 @@
 		<Option title="SchoolOSXWM" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
+		<Option virtualFolders="include/;" />
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/SchoolOSXWM" prefix_auto="1" extension_auto="1" />
@@ -40,6 +41,7 @@
 			<Add option="-Wall" />
 			<Add directory="include" />
 		</Compiler>
+		<Unit filename="include/Constants.h" />
 		<Unit filename="include/Data.h" />
 		<Unit filename="include/Desktop.h" />
 		<Unit filename="include/Layout.h" />
@@ -51,6 +53,7 @@
 		<Unit filename="src/Desktop.cpp" />
 		<Unit filename="src/Layout.cpp" />
 		<Unit filename="src/Monitor.cpp" />
+		<Unit filename="src/SchoolOSWM.cpp" />
 		<Unit filename="src/Tile.cpp" />
 		<Unit filename="src/Window.cpp" />
 		<Extensions>

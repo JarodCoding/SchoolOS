@@ -1,0 +1,12 @@
+Server.Data
+message File{
+	required uint32  ProgrammID   = 1;
+	required string  name	      = 2;
+
+}
+message FileData{
+	required uint32  ProgrammID   = 1;
+	required string  name	      = 2;
+	required bytes   data	      = 3;
+}
+

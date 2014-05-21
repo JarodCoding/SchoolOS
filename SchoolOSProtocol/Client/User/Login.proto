@@ -1,0 +1,10 @@
+package Client.User;
+message Login {
+	required string name = 1;
+	required bytes  password = 2;
+	required string version = 3;
+}
+message Logout {
+	required uint32 ClientID   = 1;
+}
+

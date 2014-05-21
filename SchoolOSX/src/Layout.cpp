@@ -1,61 +1,58 @@
 #include "Layout.h"
 #include "string.h"
-
+#include "Constants.h"
 Layout::Layout(string name)
 {
     layoutname = name;
+    tiles = vector<Tile>();
 }
 
 Layout::~Layout()
 {
-    free(tiles);
+    tiles.clear();
 }
 
 void Layout::save(){
     ofstream output;
-    output.open(layoutname.c_str());
+    output.open((Constants::Path+"Layouts/"+layoutname+".lay").c_str());
     if(!output.is_open())return;
-    output << tileSize<<"\n";
     int i = 0;
-    while(i < tileSize){
-        output << tiles[i].getData()<<"\n";
+    while(i < tiles.size()){
+        output << tiles.at(i).getData()<<"\n";
         i++;
     }
     output.close();
 }
 
 void Layout::load(){
+    tiles.clear();
     string line;
-    ifstream input(layoutname.c_str());
+    ifstream input((Constants::Path+"Layouts/"+layoutname+".lay").c_str());
     if(!input.is_open())return;
-    getline(input,line);
-    tileSize =atoi(line.c_str());
-    tiles= (Tile*) calloc(tileSize,sizeof(Tile));
     int i = 0;
     Tile *tmp;
-    while(getline(input,line)&&i < tileSize){
+    while(getline(input,line)&&i < tiles.size()){
+
         tmp = new Tile();
         (*tmp).load(line);
-        tiles[i] = *tmp;
-        i++;
+        tiles.push_back(*tmp);
         delete(tmp);
         tmp = 0;
+
+
+        i++;
+
         }
 
 }
 string Layout::getName(){
     return layoutname;
 }
-Tile *Layout::getTiles(){
-    Tile *res = (Tile *)malloc(sizeof(Tile)*tileSize);
-    memcpy(res, tiles, sizeof(Tile)*tileSize);
-    return res;
+vector<Tile> Layout::getTiles(){
+    return tiles;
 }
-int Layout::getSize(){
-    return tileSize;
-}
-void Layout::applyChanges(Tile *newTiles,int size){
-free(tiles);
-tiles = (Tile*) malloc(sizeof(Tile)*size);
-memcpy(tiles, newTiles, sizeof(Tile)*size);
+void Layout::applyChanges(vector<Tile> newTiles){
+    tiles.clear();
+    tiles = newTiles;
+
 }

@@ -1,7 +1,7 @@
 #ifndef LAYOUT
 #define LAYOUT
 #include "Tile.h"
-
+#include <vector>
 #include <fstream>
 #include <string>
 #include <stdlib.h>
@@ -16,14 +16,12 @@ class Layout
         void save();
         void load();
         string getName();
-        Tile *getTiles();
-        void applyChanges(Tile *tiles,int size);
-        int getSize();
+        vector<Tile> getTiles();
+        void applyChanges(vector<Tile> tiles);
     protected:
     private:
     string layoutname;
-    Tile *tiles;
-    int tileSize;
+    vector<Tile> tiles;
 };
 
 #endif

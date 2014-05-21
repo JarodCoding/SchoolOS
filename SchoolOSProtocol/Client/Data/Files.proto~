@@ -1,0 +1,5 @@
+package Client.Data
+message RequestFileData {
+	required uint32  ProgrammID   = 1;
+	required string  name	      = 2;
+}
