@@ -8,13 +8,15 @@ Desktop* desktop;
         Desktop::Desktop(vector< tr1::shared_ptr<Monitor> > monitors,tr1::shared_ptr<Layout> startLayout)
 {
     int scrno;
+    // connect to the X Server
     connection = xcb_connect(NULL, &scrno);
-    if (xcb_connection_has_error(conn))
+    if (xcb_connection_has_error(connection))
     {
         perror("xcb_connect failed!");
         exit(1);
     }
-    iter = xcb_setup_roots_iterator(xcb_get_setup(conn));
+    //find current Secreen
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(connection));
     for (int i = 0; i < scrno; ++ i)
     {
         xcb_screen_next(&iter);
@@ -24,7 +26,7 @@ Desktop* desktop;
     if (!screen)
     {
         fprintf (stderr, "SchoolOS: Current screen missing. Exiting :( \n");
-        xcb_disconnect(conn);
+        xcb_disconnect(connection);
         exit(1);
     }
     xcb_query_tree_reply_t *reply;
@@ -33,8 +35,8 @@ Desktop* desktop;
     int len;
     xcb_window_t *children;
     xcb_get_window_attributes_reply_t *attr;
-    reply = xcb_query_tree_reply(conn,
-                                 xcb_query_tree(conn, screen.root), 0);
+    reply = xcb_query_tree_reply(connection,
+                                 xcb_query_tree(connection, screen->root), 0);
     len = xcb_query_tree_children_length(reply);
     children = xcb_query_tree_children(reply);
 

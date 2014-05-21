@@ -8,6 +8,7 @@
 #include <sstream>
 #include "Desktop.h"
 #include "Data.h"
+#include "atmons.h"
 using namespace std;
 Tile::Tile()
 {
@@ -69,12 +70,12 @@ uint16_t Tile::setX(uint16_t x){
     setLocalX((*desktop).resizeX(getIndex(),x));
     xcb_configure_notify_event_t ce;
     ce.response_type = XCB_CONFIGURE_NOTIFY;
-    ce.event = win;
-    ce.window = win;
+    ce.event = runtime;
+    ce.window = runtime;
     ce.x = getX();
     ce.above_sibling = XCB_NONE;
     ce.override_redirect = false;
-    xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+    xcb_send_event(connection, false, runtime, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
 
     xcb_flush (connection);
 }
@@ -82,12 +83,12 @@ uint16_t Tile::setY(uint16_t y){
     setLocalY((*desktop).resizeY(getIndex(),y));
     xcb_configure_notify_event_t ce;
         ce.response_type = XCB_CONFIGURE_NOTIFY;
-        ce.event = win;
-        ce.window = win;
+        ce.event = runtime;
+        ce.window = runtime;
         ce.y = getY();
         ce.above_sibling = XCB_NONE;
         ce.override_redirect = false;
-        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+        xcb_send_event(connection, false, runtime, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
 
     xcb_flush (connection);
 }
@@ -95,12 +96,12 @@ uint16_t Tile::setWidth(uint16_t width){
         setLocalWidth((*desktop).resizeWidth(getIndex(),width));
         xcb_configure_notify_event_t ce;
         ce.response_type = XCB_CONFIGURE_NOTIFY;
-        ce.event = win;
-        ce.window = win;
+        ce.event = runtime;
+        ce.window = runtime;
         ce.width = getWidth();
         ce.above_sibling = XCB_NONE;
         ce.override_redirect = false;
-        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+        xcb_send_event(connection, false, runtime, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
 
         xcb_flush (connection);
 }
@@ -108,12 +109,12 @@ uint16_t Tile::setHeight(uint16_t height){
         setLocalHeight((*desktop).resizeHeight(getIndex(),height));
         xcb_configure_notify_event_t ce;
         ce.response_type = XCB_CONFIGURE_NOTIFY;
-        ce.event = win;
-        ce.window = win;
+        ce.event = runtime;
+        ce.window = runtime;
         ce.height = getHeight();
         ce.above_sibling = XCB_NONE;
         ce.override_redirect = false;
-        xcb_send_event(globalconf.connection, false, win, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
+        xcb_send_event(connection, false, runtime, XCB_EVENT_MASK_STRUCTURE_NOTIFY, (char *) &ce);
         xcb_flush (connection);
 }
 uint16_t Tile::getX(){
@@ -131,15 +132,20 @@ uint16_t Tile::getHeight(){
 void Tile::setHidden(bool hidden){
 
     uint32_t state;
-    if(hidden)state = 0;
-    else state = 1;
+    if(hidden){
+        xcb_unmap_window (connection,runtime);
+        state = XCB_ICCCM_WM_STATE_WITHDRAWN;
+    }else{
+        xcb_map_window (connection,runtime);
+        state = XCB_ICCCM_WM_STATE_NORMAL;
+    }
 
     uint32_t data[] = { state, XCB_NONE };
-    xcb_change_property(globalconf.connection, XCB_PROP_MODE_REPLACE, win,
+    xcb_change_property(connection, XCB_PROP_MODE_REPLACE, runtime,
                         WM_STATE, WM_STATE, 32, 2, data);
 
 
-    this.hidden = hidden;
+    (*this).hidden = hidden;
 
 }
 bool Tile::isHidden(){
@@ -161,5 +167,7 @@ void Tile::focus()
 
     xcb_send_event(globalconf.connection, false, win,
                    XCB_EVENT_MASK_NO_EVENT, (char *) &ev);
+    xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, runtime,
+                        XCB_CURRENT_TIME);
 }
 

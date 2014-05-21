@@ -5,6 +5,7 @@
 #include <vector>
 #include "Structures.h"
 #include <tr1/memory>
+#include "xcb/xcb.h"
 using namespace std;
 class Tile;
 class Layout;
@@ -35,10 +36,11 @@ class Desktop
     private:
     uint16_t width;
     uint16_t height;
-    vector< tr1::shared_ptr<Monitor> > monitors   ;
-    vector< Tile >                        tiles   ;
-    tr1::shared_ptr<Layout>       currentLayout   ;
-    xcb_screen_t                  screen          ;
+    vector< tr1::shared_ptr<Monitor> > monitors      ;
+    vector< Tile >                        tiles      ;
+    vector< Tile >                        HiddenTiles;
+    tr1::shared_ptr<Layout>       currentLayout      ;
+    xcb_screen_t                 *screen             ;
 
 };
 

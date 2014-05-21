@@ -72,23 +72,24 @@
 	"stdio.h"
 	<stdlib.h>
 
-1399757433 source:/home/jarod/SchoolOS/SchoolOSX/src/Desktop.cpp
+1400697452 source:/home/jarod/SchoolOS/SchoolOSX/src/Desktop.cpp
 	"Desktop.h"
 	"stdio.h"
 	"string.h"
 	<algorithm>
 	"Layout.h"
 
-1399755041 /home/jarod/SchoolOS/SchoolOSX/include/Desktop.h
+1400697914 /home/jarod/SchoolOS/SchoolOSX/include/Desktop.h
 	"Monitor.h"
 	"stdint.h"
 	<vector>
 	"Structures.h"
 	<tr1/memory>
+	"xcb/xcb.h"
 
 1398614798 /home/jarod/SchoolOS/SchoolOSX/include/Monitor.h
 
-1399755290 /home/jarod/SchoolOS/SchoolOSX/include/Layout.h
+1400696037 /home/jarod/SchoolOS/SchoolOSX/include/Layout.h
 	"Tile.h"
 	<vector>
 	<fstream>
@@ -97,7 +98,7 @@
 	"stdint.h"
 	"iostream"
 
-1399756526 /home/jarod/SchoolOS/SchoolOSX/include/Tile.h
+1400696274 /home/jarod/SchoolOS/SchoolOSX/include/Tile.h
 	"Structures.h"
 	<string>
 	<stdlib.h>
@@ -108,7 +109,7 @@
 1398962829 /home/jarod/SchoolOS/SchoolOSX/include/Structures.h
 	"stdint.h"
 
-1399756160 source:/home/jarod/SchoolOS/SchoolOSX/src/Layout.cpp
+1400696037 source:/home/jarod/SchoolOS/SchoolOSX/src/Layout.cpp
 	"Layout.h"
 	"string.h"
 	"Constants.h"
@@ -126,7 +127,7 @@
 	"Structures.h"
 	"Data.h"
 
-1399916923 /home/jarod/SchoolOS/SchoolOSX/include/Data.h
+1400696037 /home/jarod/SchoolOS/SchoolOSX/include/Data.h
 	"xcb/xcb.h"
 	"stdint.h"
 	"xcb_icccm.h"
@@ -146,5 +147,20 @@
 	"Desktop.h"
 	"Data.h"
 
-1399755913 /home/jarod/SchoolOS/SchoolOSX/include/Constants.h
+1400696037 /home/jarod/SchoolOS/SchoolOSX/include/Constants.h
+
+1400696037 source:/home/jarod/SchoolOS/SchoolOSX/src/SchoolOSWM.cpp
+	"Desktop.h"
+	"Data.h"
+
+1400699115 source:/home/jarod/SchoolOS/SchoolOSX/src/atoms.cpp
+	"atmons.h"
+	"string.h"
+	"stdlib.h"
+
+1400698901 /home/jarod/SchoolOS/SchoolOSX/include/atmons.h
+	<xcb/xcb_atom.h>
+	<xcb_icccm.h>
+	<xcb/xproto.h>
+	<Data.h>
 

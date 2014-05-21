@@ -32,7 +32,7 @@ class Tile
     void setLocalHeight(uint16_t height);
     void setHidden(bool hidden);
     bool isHidden();
-    void focus()
+    void focus();
     private:
     struct sizepos position;
     int TileIndex;
