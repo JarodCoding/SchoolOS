@@ -49,6 +49,7 @@
 		<Unit filename="include/Structures.h" />
 		<Unit filename="include/Tile.h" />
 		<Unit filename="include/Window.h" />
+		<Unit filename="include/atmons.h" />
 		<Unit filename="include/xcb_icccm.h" />
 		<Unit filename="src/Desktop.cpp" />
 		<Unit filename="src/Layout.cpp" />
@@ -56,6 +57,7 @@
 		<Unit filename="src/SchoolOSWM.cpp" />
 		<Unit filename="src/Tile.cpp" />
 		<Unit filename="src/Window.cpp" />
+		<Unit filename="src/atoms.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
