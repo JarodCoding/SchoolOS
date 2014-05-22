@@ -53,6 +53,15 @@ vector<Tile> Layout::getTiles(){
 }
 void Layout::applyChanges(vector<Tile> newTiles){
     tiles.clear();
-    tiles = newTiles;
+    int i = 0;
+    while(i < newTiles.size()){
+        if(newTiles.at(i).isHidden()){
+            i++;
+            continue;
+        }
+        tiles.push_back(newTiles.at(i));
+        i++;
+    }
+
 
 }

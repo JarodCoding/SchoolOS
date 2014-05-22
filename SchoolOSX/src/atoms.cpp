@@ -1,6 +1,8 @@
 #include "atmons.h"
 #include "string.h"
 #include "stdlib.h"
+xcb_atom_t WM_STATE;
+
 xcb_atom_t getatom(char *name)
 {
     xcb_intern_atom_cookie_t atom_cookie;

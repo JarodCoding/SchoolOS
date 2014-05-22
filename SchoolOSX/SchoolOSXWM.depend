@@ -72,14 +72,14 @@
 	"stdio.h"
 	<stdlib.h>
 
-1400697452 source:/home/jarod/SchoolOS/SchoolOSX/src/Desktop.cpp
+1400784308 source:/home/jarod/SchoolOS/SchoolOSX/src/Desktop.cpp
 	"Desktop.h"
 	"stdio.h"
 	"string.h"
 	<algorithm>
 	"Layout.h"
 
-1400697914 /home/jarod/SchoolOS/SchoolOSX/include/Desktop.h
+1400777262 /home/jarod/SchoolOS/SchoolOSX/include/Desktop.h
 	"Monitor.h"
 	"stdint.h"
 	<vector>
@@ -98,7 +98,7 @@
 	"stdint.h"
 	"iostream"
 
-1400696274 /home/jarod/SchoolOS/SchoolOSX/include/Tile.h
+1400786848 /home/jarod/SchoolOS/SchoolOSX/include/Tile.h
 	"Structures.h"
 	<string>
 	<stdlib.h>
@@ -109,7 +109,7 @@
 1398962829 /home/jarod/SchoolOS/SchoolOSX/include/Structures.h
 	"stdint.h"
 
-1400696037 source:/home/jarod/SchoolOS/SchoolOSX/src/Layout.cpp
+1400776956 source:/home/jarod/SchoolOS/SchoolOSX/src/Layout.cpp
 	"Layout.h"
 	"string.h"
 	"Constants.h"
@@ -135,7 +135,7 @@
 1398614790 /home/jarod/SchoolOS/SchoolOSX/include/xcb_icccm.h
 	<xcb/xcb.h>
 
-1399914921 source:/home/jarod/SchoolOS/SchoolOSX/src/Tile.cpp
+1400786880 source:/home/jarod/SchoolOS/SchoolOSX/src/Tile.cpp
 	"Tile.h"
 	<boost/algorithm/string/split.hpp>
 	<boost/algorithm/string/classification.hpp>
@@ -146,21 +146,20 @@
 	<sstream>
 	"Desktop.h"
 	"Data.h"
+	"atmons.h"
 
 1400696037 /home/jarod/SchoolOS/SchoolOSX/include/Constants.h
 
-1400696037 source:/home/jarod/SchoolOS/SchoolOSX/src/SchoolOSWM.cpp
+1400774311 source:/home/jarod/SchoolOS/SchoolOSX/src/SchoolOSWM.cpp
 	"Desktop.h"
-	"Data.h"
+	"atmons.h"
 
-1400699115 source:/home/jarod/SchoolOS/SchoolOSX/src/atoms.cpp
+1400774291 source:/home/jarod/SchoolOS/SchoolOSX/src/atoms.cpp
 	"atmons.h"
 	"string.h"
 	"stdlib.h"
 
-1400698901 /home/jarod/SchoolOS/SchoolOSX/include/atmons.h
-	<xcb/xcb_atom.h>
-	<xcb_icccm.h>
-	<xcb/xproto.h>
+1400773958 /home/jarod/SchoolOS/SchoolOSX/include/atmons.h
 	<Data.h>
+	<xcb/xcb_atom.h>
 

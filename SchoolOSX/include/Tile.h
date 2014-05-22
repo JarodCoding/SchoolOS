@@ -31,13 +31,24 @@ class Tile
     void setLocalWidth(uint16_t width);
     void setLocalHeight(uint16_t height);
     void setHidden(bool hidden);
+    void setHiddenLocal(bool hidden);
+    void setRutime(xcb_window_t window);
     bool isHidden();
     void focus();
+    void focusLocal();
+    bool isAktive();
+    void destroy();
+    void destroyLocal();
+
+    bool compare(Tile tile);
     private:
     struct sizepos position;
     int TileIndex;
     xcb_window_t runtime;
     bool hidden;
+    string name;
+
+
 };
 
 #endif // TILE

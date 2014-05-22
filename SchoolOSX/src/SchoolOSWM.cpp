@@ -1,5 +1,6 @@
 #include "Desktop.h"
-#include "Data.h"
+#include "atmons.h"
 int main(){
 
+    initAtoms();
 }

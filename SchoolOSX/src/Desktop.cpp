@@ -5,8 +5,10 @@
 #include "Layout.h"
 using namespace std;
 Desktop* desktop;
+xcb_connection_t* connection;
         Desktop::Desktop(vector< tr1::shared_ptr<Monitor> > monitors,tr1::shared_ptr<Layout> startLayout)
 {
+    tiles = vector<Tile>();
     int scrno;
     // connect to the X Server
     connection = xcb_connect(NULL, &scrno);
@@ -39,17 +41,22 @@ Desktop* desktop;
                                  xcb_query_tree(connection, screen->root), 0);
     len = xcb_query_tree_children_length(reply);
     children = xcb_query_tree_children(reply);
+    i = 0;
+    Tile tmp;
+    while(i < len){
+        tmp = Tile();
+        tmp.setRutime(children[i]);
+        tiles.push_back(tmp);
+// TODO (jarod#1#): Registry Name and Security Check ...
 
+        i++;
+    }
 
     (*this).monitors = monitors;
-    tiles = startLayout->getTiles();
-    currentLayout = startLayout;
+    applyLayout(startLayout);
     desktop = this;
 }
-Desktop::Desktop(int width,int height){
-    (*this).width = width;
-    (*this).height = height;
-}
+
 
 Desktop::~Desktop()
 {
@@ -62,10 +69,47 @@ Desktop::~Desktop()
     monitors.clear();
 }
 void Desktop::applyLayout(tr1::shared_ptr<Layout> newLayout){
-    tiles.clear();
-    tiles = newLayout->getTiles();
-    (*this).currentLayout.reset();
+
+    //hide all Tiles not represented in the Layout
+    int i = 0;
+    int i2 = 0;
+    while(i < tiles.size()){
+         while(i2 < newLayout->getTiles().size()){
+            if(newLayout->getTiles().at(i2).compare(tiles.at(i) )){
+                if(newLayout->getTiles().at(i2).isHidden()){
+                    newLayout->getTiles().at(i2).setHiddenLocal(false);
+                }
+                tiles.at(i).setLocalX(newLayout->getTiles().at(i).getX());
+                tiles.at(i).setLocalY(newLayout->getTiles().at(i).getY());
+                tiles.at(i).setLocalWidth(newLayout->getTiles().at(i).getWidth());
+                tiles.at(i).setLocalHeight(newLayout->getTiles().at(i).getHeight());
+                newLayout->getTiles().erase(newLayout->getTiles().begin()+i2);
+                i2 = newLayout->getTiles().size();
+            }
+            i2++;
+        }
+
+        //if no resullt was wound tile is being hidden (if one was found i2 = newLayout->getTiles().size()+1)
+        if(i2 <= newLayout->getTiles().size()){
+            tiles.at(i).setHidden(true);
+        }
+        i2 = 0;
+        i++;
+    }
+    i = 0;
+    //add missing Tiles;
+    while(i < newLayout->getTiles().size()){
+        tiles.push_back(newLayout->getTiles().at(i));
+        newLayout->getTiles().pop_back();
+        i++;
+    }
+    if(currentLayout != NULL)
+    currentLayout.reset();
+
     currentLayout = newLayout;
+    xcb_flush(connection);
+
+
 
 }
 tr1::shared_ptr<Layout> Desktop::getCurrentLayout(){
@@ -90,7 +134,7 @@ uint16_t Desktop::resizeX(int index,uint16_t requestedX){
         uint16_t X = requestedX;
         int i = 0;
         while(i < tiles.size()){
-            if(i == index ){
+            if(i == index ||tiles.at(i).isHidden()){
                 i++;
                 continue;
             }
@@ -117,7 +161,7 @@ uint16_t Desktop::resizeX(int index,uint16_t requestedX){
         uint16_t HEIGHT = tiles[index].getHeight();
         int i = 0;
         while(i < tiles.size()){
-            if(i == index ){
+            if(i == index||tiles.at(i).isHidden() ){
                 i++;
                 continue;
             }
@@ -148,7 +192,7 @@ uint16_t Desktop::resizeY(int index,uint16_t requestedY){
         uint16_t X = tiles[index].getX();
         int i = 0;
         while(i < tiles.size()){
-            if(i == index ){
+            if(i == index||tiles.at(i).isHidden() ){
                 i++;
                 continue;
             }
@@ -177,7 +221,7 @@ uint16_t Desktop::resizeY(int index,uint16_t requestedY){
     uint16_t newHeight;
     int i = 0;
     while(i < tiles.size()){
-        if(i == index ){
+        if(i == index||tiles.at(i).isHidden() ){
             i++;
             continue;
         }
@@ -208,7 +252,7 @@ uint16_t Desktop::resizeWidth(int index,uint16_t requestedWidth){
     uint16_t newWidth;
     int i = 0;
     while(i < tiles.size()){
-        if(i == index ){
+        if(i == index ||tiles.at(i).isHidden()){
             i++;
             continue;
         }
@@ -239,7 +283,7 @@ uint16_t Desktop::resizeHeight(int index,uint16_t requestedHeight){
     uint16_t newHeight;
     int i = 0;
     while(i < tiles.size()){
-        if(i == index ){
+        if(i == index||tiles.at(i).isHidden() ){
             i++;
             continue;
         }
@@ -255,11 +299,13 @@ uint16_t Desktop::resizeHeight(int index,uint16_t requestedHeight){
     return requestedHeight;
 }
 void Desktop::removeTile(int index){
+   tiles.at(index).destroyLocal();
    tiles.erase(tiles.begin()+index);
+
 }
 void Desktop::addTile(Tile tile){
-
-
-
+    tiles.push_back(tile);
+    tile.setIndex(tiles.size()-1);
 }
+
 
