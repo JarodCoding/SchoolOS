@@ -21,7 +21,7 @@ Not started yet :(
 
 Changelog:
 ==========
-0.0.0.1
+0.0.0.x
 -------
-test
+Early dev version won't be dokumented look at commits if you are intersted
 
