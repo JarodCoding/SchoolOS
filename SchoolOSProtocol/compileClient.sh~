@@ -1,4 +1,0 @@
-#!/bin/sh
-#Requires protocol Buffers (developers.google.com/protocol-buffers/)
-protoc -I=SchoolOSProtocol/Client --cpp_out=SchoolOSProtocol/Client/CPP SchoolOSProtocol/Client/User/Login.proto
-protoc -I=SchoolOSProtocol/Client --cpp_out=SchoolOSProtocol/Client/CPP SchoolOSProtocol/Client/Data/Files.proto
