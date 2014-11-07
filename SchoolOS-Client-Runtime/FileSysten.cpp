@@ -1,6 +1,6 @@
 /*
  * FileSysten.cpp
- *	
+ *
  *  Created on: Sep 23, 2014
  *      Author: Pascal Kuthe
  */
@@ -257,8 +257,13 @@ namespace NameCache{
 		if(--FailCacheCountdown<=0){
 			FailCacheCountdown = 50;
 			int i = 0;
+			auto iter = FailCache->begin();
 			while(i < FailCache->size()){
-				if(--((FailCache->begin()+++i)->second) <= 0)FailCache->erase(FailCache->begin()+i);
+				if(--(iter->second) == 0)
+				iter++;
+				i++;
+
+
 			}
 		}
 		FailCacheCountdownMutex.unlock();
@@ -297,16 +302,20 @@ namespace NameCache{
 
 		try{
 			res = NameCache->at(path);
+			memset((void *)path,0,sizeof(char)*strlen(path));
+
 		}catch(std::out_of_range& e){
 			NameCacheMutex.unlock();
 			FailCacheMutex.lock();
 			try{
 				unsigned char &ref = FailCache->at(path);
 				ref = std::min(255,ref+1);
+				memset((void *)path,0,sizeof(char)*strlen(path));
+
 
 			}catch(std::out_of_range& e){
-				memset((void *)path,0,sizeof(char)*strlen(path));
 			}
+
 			FailCacheMutex.unlock();
 			return nullptr;
 
@@ -335,11 +344,14 @@ namespace NameCache{
 
 }
 SchoolOS::FileSystem::Objects::Directory* getDirectory(const char *path){
+
 	if(strlen(path) <= 1){
 		if(strcmp(path,"/"))return SchoolOS::FileSystem::root;
 		else return nullptr;
 	}
-
+	SchoolOS::FileSystem::Objects::FileSystemElement * CacheReturn = NameCache::get(path);
+		if(*path == 0)
+			return (SchoolOS::FileSystem::Objects::Directory *)CacheReturn;
 
 
 
@@ -388,7 +400,10 @@ SchoolOS::FileSystem::Objects::Directory* getDirectory(const char *path){
 			if(strcasecmp(CurrentSubdirectorys.at(i)->getName().c_str(),tmp)){
 				currentDirecetory = CurrentSubdirectorys.at(i);
 				delete tmp;
-				if(pos>=TotalSize)return CurrentSubdirectorys.at(i);
+				if(pos>=TotalSize){
+					NameCache::cache(path,CurrentSubdirectorys.at(i));
+					return CurrentSubdirectorys.at(i);
+				}
 
 				else continue;
 			}
@@ -396,15 +411,24 @@ SchoolOS::FileSystem::Objects::Directory* getDirectory(const char *path){
 		}
 
 		// we should only end up here if the current string is not a name of one of the subdirectory of the current parentdirectory
+		NameCache::cache(path,nullptr);
 		return nullptr;
+
 	}
+	NameCache::cache(path,nullptr);
 	return nullptr;
+
 }
 
 bool isDirectory(const char * path){
 	return getDirectory(path)!= nullptr;
 }
 SchoolOS::FileSystem::Objects::File* getFile(const char *path){
+	SchoolOS::FileSystem::Objects::FileSystemElement * CacheReturn = NameCache::get(path);
+		if(*path == 0)
+			return (SchoolOS::FileSystem::Objects::File *)CacheReturn;
+
+
 	int i =  strlen(path)-2;//minus one fir the way arrays work and another -1 ,because there is never going to be a // and in case of directorys / at the end should be ignored
 		bool isRunning = true;
 		while(i <= 0&&isRunning){
@@ -415,13 +439,18 @@ SchoolOS::FileSystem::Objects::File* getFile(const char *path){
 		char * dirPath = (char *)malloc(i*sizeof(char));
 		memcpy(dirPath,path,sizeof(char)*i);
 	SchoolOS::FileSystem::Objects::Directory *dir = getDirectory(dirPath);
-	if(dir == nullptr)return nullptr;
+	if(dir == nullptr){
+		NameCache::cache(path,nullptr);
+
+		return nullptr;
+	}
 	delete dirPath;
 	char * filePath = (char *)malloc((strlen(path)-i)*sizeof(char));
 	memccpy(filePath,path,(i+1)*sizeof(char),(strlen(path)-i)*sizeof(char));
 	SchoolOS::FileSystem::Objects::File *file = dir->getFile(filePath);
 	delete filePath;
-	NameCache::cache(file->getPath().c_str(),file);
+	NameCache::cache(path,file);
+
 	return file;
 }
 bool isFile(const char *path){
@@ -455,13 +484,18 @@ static int m_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 
 	}
-static int m_unlink (const char *){
+static int m_unlink (const char *path){
+	SchoolOS::FileSystem::Objects::File *file = getFile(path);
+	if(file == nullptr)return -ENOENT;
+	((SchoolOS::FileSystem::Objects::Directory *)file->getParent())->deleteFile(file->getName());
+	NameCache::remove(path);
 
 }
 static int m_rmdir (const char *path){
 	SchoolOS::FileSystem::Objects::Directory *dir = getDirectory(path);
 	if(dir == nullptr)return -ENOENT;
 	((SchoolOS::FileSystem::Objects::Directory *)dir->getParent())->deleteDirectory(dir->getName());
+	NameCache::remove(path);
 
 	//TODO: Networkflush
 }
@@ -471,12 +505,14 @@ static int m_mkdir(const char * path,mode_t){
 	std::string  name = std::string(path).substr(parent->getPath().length()-1,strlen(path)-parent->getPath().length());
 	if(parent->getSubdirectory(name.c_str()) != nullptr)return -ENOENT;
 	parent->addDirectory(name.c_str());
-		return 0;
+	NameCache::cache(path,parent->getSubdirectory(name.c_str()));
+	return 0;
 	}
 static int m_rename(const char * old,const char* newname){
 	SchoolOS::FileSystem::Objects::File *tmp = getFile(old);
 	if(tmp == 0)return -ENOENT;
 	tmp->changeName(newname);
+	NameCache::reCache(newname,old);
 
 	return 0;
 }
@@ -510,10 +546,8 @@ static int m_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 				}
 		delete stbuf;
 
-		filler(buf, "..", NULL, 0);
 
 
-	//filler(buf, hello_path + 1, NULL, 0);
 
 		return 0;
 	}
@@ -566,7 +600,7 @@ static int m_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		m_oper.rmdir   	= m_rmdir;
 		m_oper.mkdir	= m_mkdir;
 		m_oper.rename 	= m_rename;
-		m_oper.flush = 	= m_flush;//TODO: flush()
+//		m_oper.flush = 	= m_flush;//TODO: flush()
 	}
 	void runFuse(char *root){
 		char** fuse_args = new char* [1];
