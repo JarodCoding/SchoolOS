@@ -1,0 +1,18 @@
+Startup (Client)
+	Client: Handshake(CID)
+	Server: Handshake(SID)
+Login:
+	Client: Login(Userhash)
+	Server: error-code (errorcode == 0 = sucess)
+	Server: Login-Process(AllowedProgramms(PID,SecurityLevel)files[])[]);
+	Client: Login-Finished(Installed-PID[])
+ProgrammInstallation:
+	--Write To Server Database
+	Server: Install(PID,Name);
+	--Write to Client Database
+	--Donwload Package if not security	.
+	Client: Install-Confirm(PID,Name)
+Logout:
+	Client: Logout(UID)
+	Server: LogoutConfirm(UID)
+

@@ -1,0 +1,21 @@
+message Login{
+	required bytes 		UserHash 	= 1;
+}
+
+message LoginProcess{
+	repeated Programm 	Programms 	= 1;	
+	required Directory 	RootDirectory 	= 2;
+}
+message Programm{
+	required uint32 	PID		= 1;
+
+}
+message Directory{
+	required string		Name	 	= 1;
+	repeated string		Files	 	= 2;
+	repeated Directory 	SubDirectorys   = 3;
+}
+message File{
+	required string		Name 		= 1;
+	required int32		Size 		= 2;
+}
