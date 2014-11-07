@@ -1,0 +1,12 @@
+Login:
+	Request Allowed Programms;
+	Download Highssecurity Programms; 
+	Install Allowed Programms;
+	pacman -Syu
+	startx;
+Client-Installation:
+	pacman -S  <programm>
+	pacman -R  <programm>
+	pacman -Sm <programm> /.SchoolOS/.p
+	Download Icon to /.SchoolOS/.Icons/
+	Write <id>|<name>|<security> To Database;
