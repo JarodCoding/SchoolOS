@@ -10,6 +10,7 @@ The SchoolServer is a Server software designed to be the controler of all School
 SchoolOSX
 =========
 CANCELD FOR NOW I USE THE AWSESOME WM AS A TEMPORARY REPLACEMENT, BECAUSE I AM BEHIND SCHEDULE :(
+
 SchoolOSX is the Module of SchoolOS wich runs on an School Computer. It has a Linux kernel and is a Windowmanager based on the X window System (www.x.org) and is using XCB Libary (www.freedesktop.org). The windowmanager is suspose to be tiled but the Tiles are resizable and saveable to Layouts to save your favorit setups. 
 
 School-IOS
