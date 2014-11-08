@@ -21,6 +21,8 @@
 #include "errno.h"
 #include "unordered_map"
 #include "boost/thread/mutex.hpp"
+#include "boost/thread/shared_mutex.hpp"
+
 #define Mount  "/home"
 #define Normal "/.cache"
 namespace SchoolOS {
@@ -247,9 +249,9 @@ char * getParentPath(const char *path){
 namespace NameCache{
 
 	std::unordered_map<std::string,SchoolOS::FileSystem::Objects::FileSystemElement *> *NameCache = new std::unordered_map<std::string,SchoolOS::FileSystem::Objects::FileSystemElement *>();
-	boost::mutex NameCacheMutex;
+	boost::shared_mutex NameCacheMutex;
 	std::unordered_map<std::string,unsigned char> *FailCache = new std::unordered_map<std::string,unsigned char>();	//since every element uin this would have the value nullptr i decided to put them in a seperate map and remove them after the value reaches 0
-	boost::mutex FailCacheMutex;
+	boost::shared_mutex FailCacheMutex;
 	boost::mutex FailCacheCountdownMutex;
 	unsigned char FailCacheCountdown = 50;
 	void update(){
@@ -270,43 +272,42 @@ namespace NameCache{
 	}
 	void cache(const char * path,SchoolOS::FileSystem::Objects::FileSystemElement *ptr){
 		update();
-
+		boost::unique_lock<boost::shared_mutex> lock;
 		if(ptr == nullptr){
-			FailCacheMutex.lock();
+			lock(FailCacheMutex);
 			FailCache->emplace(path,FailCacheCountdown<20?2:1);
-			FailCacheMutex.unlock();
 		}else{
-			NameCacheMutex.lock();
+			lock(NameCacheMutex);
 			NameCache->emplace(path,ptr);
-			NameCacheMutex.unlock();
 		}
+		lock.release();
+
 	}
 	void remove(const char * path){
 		update();
-		NameCacheMutex.lock();
+		boost::unique_lock<boost::shared_mutex> lock(NameCacheMutex);
 		 if(NameCache->erase(path)< 1){
-				NameCacheMutex.unlock();
-				FailCacheMutex.lock();
+			 	lock.release();
+			 	lock(FailCacheMutex);
 				FailCache->erase(path);
-				FailCacheMutex.unlock();
-
+				lock.release();
 		 }else
-			 NameCacheMutex.lock();
+			lock.release();
 
 
 	}
 	SchoolOS::FileSystem::Objects::FileSystemElement * get(const char *path){
 		update();
 		SchoolOS::FileSystem::Objects::FileSystemElement *res = nullptr;
-		NameCacheMutex.lock();
+		boost::shared_lock<boost::shared_mutex> lock(NameCacheMutex);
 
 		try{
 			res = NameCache->at(path);
 			memset((void *)path,0,sizeof(char)*strlen(path));
 
 		}catch(std::out_of_range& e){
-			NameCacheMutex.unlock();
-			FailCacheMutex.lock();
+			lock.release();
+			lock(FailCacheMutex);
 			try{
 				unsigned char &ref = FailCache->at(path);
 				ref = std::min(255,ref+1);
@@ -316,29 +317,29 @@ namespace NameCache{
 			}catch(std::out_of_range& e){
 			}
 
-			FailCacheMutex.unlock();
+			lock.release();
 			return nullptr;
 
 		}
-		NameCacheMutex.unlock();
+		lock.release();
 		return res;
 
 
 	}
 	void reCache(const char * newPath, const char *oldPath){
 		update();
-		NameCacheMutex.lock();
+		boost::upgrade_lock< boost::shared_mutex > lock(NameCacheMutex);
 		SchoolOS::FileSystem::Objects::FileSystemElement *elem;
 		try{
 			elem = NameCache->at(oldPath);
 		}catch(std::out_of_range& e){
-			NameCacheMutex.unlock();
+			lock.release();
 			return;
 		}
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(lock);
 		NameCache->erase(oldPath);
 		NameCache->emplace(newPath,elem);
-		NameCacheMutex.unlock();
-
+		lock.release();
 	}
 
 
@@ -567,7 +568,6 @@ static int m_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			      struct fuse_file_info *fi)
 	{
 		size_t len;
-		(void) fi;
 		//if(strcmp(path, hello_path) != 0)
 		//	return -ENOENT;
 
@@ -596,10 +596,14 @@ static int m_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	static fuse_operations m_oper;
 	void initFuse(){
 		m_oper.getattr 	= m_getattr;
+		m_oper.rename 	= m_rename;
 		m_oper.unlink  	= m_unlink;
 		m_oper.rmdir   	= m_rmdir;
 		m_oper.mkdir	= m_mkdir;
-		m_oper.rename 	= m_rename;
+		m_oper.readdir	= m_readdir;
+		m_oper.read		= m_read;
+		m_oper.write	= m_write;
+		m_oper.open		= m_open;
 //		m_oper.flush = 	= m_flush;//TODO: flush()
 	}
 	void runFuse(char *root){
