@@ -10,7 +10,7 @@ The SchoolServer is a Server software designed to be the controler of all School
 
 SchoolOS-Client
 ================
-A Arch Linux based Client for SchoolOS, which is designed to run on the computers which are located in the school
+AN Arch Linux based Client for SchoolOS, which is designed to run on the computers which are located in the school
   
   SchoolOS-Client-Runtime
 ==========================
