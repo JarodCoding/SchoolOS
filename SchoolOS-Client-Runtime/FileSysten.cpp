@@ -22,7 +22,9 @@
 #include "unordered_map"
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/shared_mutex.hpp"
-
+#include "fcntl.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #define Mount  "/home"
 #define Normal "/.cache"
 namespace SchoolOS {
@@ -85,13 +87,12 @@ namespace SchoolOS {
 
 					}
 					virtual void changeName(std::string newname){
-						boost::unique_lock<boost::shared_mutex> lock;
 						if(isCached()){
-							lock(cacheMutex);
+							boost::unique_lock<boost::shared_mutex> lock(cacheMutex);
 							rename(getPath().c_str(),getParent()->getPath().append(newname).c_str());
 							lock.release();
 						}
-						lock(nameMutex);
+						boost::unique_lock<boost::shared_mutex> lock(nameMutex);
 						name = newname;
 						lock.release();
 					}
@@ -111,14 +112,13 @@ namespace SchoolOS {
 						if(!inFileSystem())return;
 						FileSystemElement *parent = getParent();
 						if(!parent->isCached())parent->cache();
-						boost::upgrade_lock<boost::shared_mutex> lock1(cacheMutex);
+						boost::unique_lock<boost::shared_mutex> lock(cacheMutex);
 						if(cached == true){
-							lock1.release();
+							lock.release();
 							return;
 						}
-						boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
 						cached = realCache();
-						lock1.release();
+						lock.release();
 					}
 					virtual bool realCache() = 0;
 				protected:
@@ -255,7 +255,7 @@ namespace SchoolOS {
 						unsigned int i = 0;
 						while(i < files.size()){
 							if(files.at(i)->getName()==name){
-								boost::unique_lock<boost::shared_mutex>  lock2(lock1);
+								boost::upgrade_to_unique_lock<boost::shared_mutex>  lock2(lock1);
 								delete files.at(i);
 								files.erase(files.begin()+i);
 								lock1.release();
@@ -378,7 +378,7 @@ namespace SchoolOS {
 }  // namespace SchoolOS
 namespace fuseNamespace{
 char * getParentPath(const char *path){
-	int i =  strlen(path)-2;//minus one fir the way arrays work and another -1 ,because there is never going to be a // and in case of directorys / at the end should be ignored
+	int i =  strlen(path)-2;//minus one for the way arrays work and another -1 ,because there is never going to be a // and in case of directorys / at the end should be ignored
 		bool isRunning = true;
 		while(i <= 0&&isRunning){
 			if(path[i] == '/')isRunning = false;
@@ -416,15 +416,15 @@ namespace NameCache{
 	}
 	void cache(const char * path,SchoolOS::FileSystem::Objects::FileSystemElement *ptr){
 		update();
-		boost::unique_lock<boost::shared_mutex> lock;
 		if(ptr == nullptr){
-			lock(FailCacheMutex);
+			boost::unique_lock<boost::shared_mutex> lock(FailCacheMutex);
 			FailCache->emplace(path,FailCacheCountdown<20?2:1);
+			lock.release();
 		}else{
-			lock(NameCacheMutex);
+			boost::unique_lock<boost::shared_mutex> lock(NameCacheMutex);
 			NameCache->emplace(path,ptr);
+			lock.release();
 		}
-		lock.release();
 
 	}
 	void remove(const char * path){
@@ -432,9 +432,9 @@ namespace NameCache{
 		boost::unique_lock<boost::shared_mutex> lock(NameCacheMutex);
 		 if(NameCache->erase(path)< 1){
 			 	lock.release();
-			 	lock(FailCacheMutex);
+			 	boost::unique_lock<boost::shared_mutex> lock2(FailCacheMutex);
 				FailCache->erase(path);
-				lock.release();
+				lock2.release();
 		 }else
 			lock.release();
 
@@ -451,7 +451,7 @@ namespace NameCache{
 
 		}catch(std::out_of_range& e){
 			lock.release();
-			lock(FailCacheMutex);
+			boost::shared_lock<boost::shared_mutex> lock2(FailCacheMutex);
 			try{
 				unsigned char &ref = FailCache->at(path);
 				ref = std::min(255,ref+1);
@@ -461,7 +461,7 @@ namespace NameCache{
 			}catch(std::out_of_range& e){
 			}
 
-			lock.release();
+			lock2.release();
 			return nullptr;
 
 		}
@@ -697,34 +697,33 @@ static int m_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		return 0;
 	}
 
-	static int m_open(const char *path, struct fuse_file_info *fi)
-	{
-		//if (strcmp(path, hello_path) != 0)
-		//	return -ENOENT;
+static int m_open(const char *path, struct fuse_file_info *fi)
+{
+	SchoolOS::FileSystem::Objects::File *file = getFile(path);
+	if(file == nullptr)
+		return -ENOENT;
+	file->cache();
+	fi->fh = open(std::string(Normal).append(path).c_str(),fi->flags);
 
-		if ((fi->flags & 3) != O_RDONLY)
-			return -EACCES;
 
-		return 0;
-	}
+	return 0;
+}
 
-	static int m_read(const char *path, char *buf, size_t size, off_t offset,
+static int m_read(const char *path, char *buf, size_t size, off_t offset,
 			      struct fuse_file_info *fi)
-	{
-		size_t len;
-		//if(strcmp(path, hello_path) != 0)
-		//	return -ENOENT;
+{
+	if(offset > getFile(path)->getSize())return -EOF;
+	lseek(fi->fh,offset,SEEK_SET);
+	return 	read(fi->fh,(void *)buf,size);
 
-	//	len = strlen(hello_str);
-		if (offset < len) {
-			if (offset + size > len)
-				size = len - offset;
-		//	memcpy(buf, hello_str + offset, size);
-		} else
-			size = 0;
+}
+static int m_write(const char *path,const char *buf, size_t size, off_t offset,
+			      struct fuse_file_info *fi)
+{
+	lseek(fi->fh,offset,SEEK_SET);
+	write(fi->fh,(void *)buf,size);
 
-		return size;
-	}
+}
 
 	//OK I have to make a real talk now. I love open source especially linux and most gnu projects but WTF GNU G++ YOU REALLY MAKE ME DEFINE EVERY SINGLE METHOD IN THIS STUPID STRUCTURE THAT IS ABSULUTLY IMPOSSIBLE
 	/*static struct fuse_operations m_oper = {
