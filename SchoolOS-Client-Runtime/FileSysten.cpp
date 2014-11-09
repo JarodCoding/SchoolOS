@@ -33,53 +33,102 @@ namespace SchoolOS {
 				 FileSystemElement(std::string name):name(name),parent(nullptr),cached(0){
 
 					}
-				~FileSystemElement() {
-
+				virtual ~FileSystemElement() {
+					if(inFileSystem()){
+						removeFromFileSystem();
+					}
 					}
 					std::string getPath(){
-						return parent->getPath().append("/").append(getName());
+						std::string path = getParent()->getPath().append("/").append(getName());
+						return path;
 					}
 					std::string getName(){
-						return name;
+						boost::shared_lock<boost::shared_mutex> lock(nameMutex);
+						std::string tmp = name;
+						lock.release();
+						return tmp;
+
 					}
 					Objects::FileSystemElement *getParent(){
-						return parent;
+						boost::shared_lock<boost::shared_mutex> lock(parentMutex);
+						Objects::FileSystemElement *tmp = parent;
+						lock.release();
+						return tmp;
 					}
 
 					void addToFileSystem(FileSystemElement* parent){
+
+						boost::upgrade_lock<boost::shared_mutex> lock1(parentMutex);
+						if(parent != nullptr){
+							lock1.release();
+							return;
+						}
+						boost::upgrade_to_unique_lock<boost::shared_mutex> lock3(lock1);
 						this->parent = parent;
+						lock1.release();
+						boost::unique_lock<boost::shared_mutex> lock2(cacheMutex);
 						cached = 0;
+						lock2.release();
 					}
 					void removeFromFileSystem(){
+						boost::upgrade_lock<boost::shared_mutex> lock1(parentMutex);
+						if(parent == nullptr){
+							lock1.release();
+							return;
+						}
+						boost::upgrade_to_unique_lock<boost::shared_mutex> lock3(lock1);
 						parent = nullptr;
+						lock1.release();
+						boost::unique_lock<boost::shared_mutex> lock2(cacheMutex);
 						cached = 0;
+						lock2.release();
 
 					}
 					virtual void changeName(std::string newname){
-						int i = 0;
-						if(cached){
-							rename(getPath().c_str(),parent->getPath().append(newname).c_str());
+						boost::unique_lock<boost::shared_mutex> lock;
+						if(isCached()){
+							lock(cacheMutex);
+							rename(getPath().c_str(),getParent()->getPath().append(newname).c_str());
+							lock.release();
 						}
+						lock(nameMutex);
 						name = newname;
-
+						lock.release();
 					}
 					bool inFileSystem(){
-						return parent != nullptr;
+						boost::shared_lock<boost::shared_mutex> lock(parentMutex);
+						bool tmp = parent != nullptr;
+						lock.release();
+						return tmp;
 					}
 					bool isCached(){
-						return cached;
+						boost::shared_lock<boost::shared_mutex> lock(cacheMutex);
+						bool tmp = cached;
+						lock.release();
+						return tmp;
 					}
 					void cache(){
 						if(!inFileSystem())return;
+						FileSystemElement *parent = getParent();
 						if(!parent->isCached())parent->cache();
+						boost::upgrade_lock<boost::shared_mutex> lock1(cacheMutex);
+						if(cached == true){
+							lock1.release();
+							return;
+						}
+						boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
 						cached = realCache();
-
+						lock1.release();
 					}
 					virtual bool realCache() = 0;
 				protected:
 					std::string name;
+					boost::shared_mutex nameMutex;
 					FileSystemElement *parent;
+					boost::shared_mutex parentMutex;
 					bool cached;
+					boost::shared_mutex cacheMutex;
+
 			};
 			class File: public FileSystemElement{
 				public:
@@ -92,15 +141,25 @@ namespace SchoolOS {
 					File(const ::File &NetworkFile):FileSystemElement(NetworkFile.name()),size(NetworkFile.size()){
 
 					}
+
 					bool realCache(){
 						//TODO download file from server
 						return creat(std::string(Normal).append(getPath()).c_str(),0666);
 					}
 				__off_t getSize(){
-					return size;
+					boost::shared_lock<boost::shared_mutex> lock(sizeMutex);
+					__off_t tmp = size;
+					lock.release();
+					return tmp;
+				}
+				void resize(__off_t newsize){
+					boost::unique_lock<boost::shared_mutex> lock(sizeMutex);
+					size = newsize;
+					lock.release();
 				}
 				private:
 					__off_t size;
+					boost::shared_mutex sizeMutex;
 			};
 			class Directory: public FileSystemElement{
 				public:
@@ -125,59 +184,118 @@ namespace SchoolOS {
 
 
 					std::vector<File*> getFiles(){
-						return files;
+						boost::shared_lock<boost::shared_mutex> lock(filesMutex);
+						std::vector<File*> tmp = files;
+						lock.release();
+						return tmp;
 					}
 					File* getFile(int index){
-						return files.at(index);
+						boost::shared_lock<boost::shared_mutex> lock(filesMutex);
+						File* tmp = files.at(index);
+						lock.release();
+						return tmp;
 					}
 					File* getFile(std::string name){
+						boost::shared_lock<boost::shared_mutex> lock(filesMutex);
+
 						int i = 0;
 						while(i < files.size()){
-							if(files.at(i)->getName()==name)return files.at(i);
+							if(files.at(i)->getName()==name){
+								File* tmp = files.at(i);
+								lock.release();
+								return tmp;
+							}
 							i++;
 						}
+						lock.release();
 						return nullptr;
 					}
 					void addFile(File &file){
+						boost::upgrade_lock<boost::shared_mutex> lock1(filesMutex);
+						int i = 0;
+						while(i < files.size()){
+							if(files.at(i)->getName()==file.getName()){
+								lock1.release();
+								return;
+							}
+							i++;
+						}
+						boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
 						File *tmp = new File(file.getName(),file.getSize());
 						files.push_back(tmp);
+						lock1.release();
 						tmp->addToFileSystem(this);
 
 					}
 					void addFile(std::string name){
+					boost::upgrade_lock<boost::shared_mutex> lock1(filesMutex);
+					int i = 0;
+					while(i < files.size()){
+						if(files.at(i)->getName()==name){
+							lock1.release();
+							return;
+						}
+						i++;
+					}
+					boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
+
 						File* tmp = new File(name);
 						files.push_back(tmp );
+						lock1.release();
 						tmp->addToFileSystem(this);
 					}
 					void deleteFile(int i){
-						files.at(i)->removeFromFileSystem();
+						boost::unique_lock<boost::shared_mutex> lock(filesMutex);
 						delete files.at(i);
 						files.erase(files.begin()+i);
+						lock.release();
 					}
 					bool deleteFile(std::string name){
+						boost::upgrade_lock<boost::shared_mutex> lock1(filesMutex);
 						unsigned int i = 0;
 						while(i < files.size()){
 							if(files.at(i)->getName()==name){
-								deleteFile(i);
+								boost::unique_lock<boost::shared_mutex>  lock2(lock1);
+								delete files.at(i);
+								files.erase(files.begin()+i);
+								lock1.release();
 								return true;
 							}
 							i++;
 						}
+						lock1.release();
 						return false;
 
 					}
 					std::vector<Directory*> getSubdirectorys(){
-						return subdirectorys;
+						boost::shared_lock<boost::shared_mutex> lock(directoryMutex);
+						std::vector<Directory*> tmp = subdirectorys;
+						lock.release();
+						return tmp;
 					}
 					Directory* getSubdirectory(int i){
-						return subdirectorys.at(i);
+					boost::shared_lock<boost::shared_mutex> lock(directoryMutex);
+					Directory* tmp;
+					try{
+						tmp = subdirectorys.at(i);
+					}catch(std::out_of_range& e){
+						tmp = nullptr;
+					}
+					lock.release();
+					return tmp;
 					}
 					Directory* getSubdirectory(std::string name){
+						boost::shared_lock<boost::shared_mutex> lock(directoryMutex);
 						unsigned i = 0;
 						while(i < subdirectorys.size()){
-							if(subdirectorys.at(i)->getName()==name)return subdirectorys.at(i);
+							if(subdirectorys.at(i)->getName()==name){
+								Directory* tmp = subdirectorys.at(i);
+								lock.release();
+								return tmp;
+							}
 							i++;
 						}
+						lock.release();
 						return nullptr;
 					}
 
@@ -190,9 +308,19 @@ namespace SchoolOS {
 
 					protected:
 					void addDirectory(Directory* dir){
-						dir->addToFileSystem(this);
-
-						subdirectorys.push_back(dir);
+					boost::upgrade_lock<boost::shared_mutex> lock1(directoryMutex);
+					unsigned i = 0;
+					while(i < subdirectorys.size()){
+						if(subdirectorys.at(i)->getName()==dir->getName()){
+							lock1.release();
+							return;
+						}
+						i++;
+					}
+					dir->addToFileSystem(this);
+					boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
+					subdirectorys.push_back(dir);
+					lock1.release();
 					}
 					public:
 
@@ -200,19 +328,34 @@ namespace SchoolOS {
 						addDirectory(new Directory(name));
 					}
 					void deleteDirectory(int i){
-						subdirectorys.at(i)->removeFromFileSystem();
-						delete subdirectorys.at(i);
+						boost::upgrade_lock<boost::shared_mutex> lock1(directoryMutex);
+						Directory* tmp;
+						try{
+							tmp = subdirectorys.at(i);
+						}catch(std::out_of_range& e){
+							lock1.release();
+							return;
+						}
+						delete tmp;
+						boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
 						subdirectorys.erase(subdirectorys.begin()+i);
+						lock1.release();
 					}
 					bool deleteDirectory(std::string name){
+						boost::upgrade_lock<boost::shared_mutex> lock1(directoryMutex);
 						unsigned int i = 0;
 						while(i < subdirectorys.size()){
 							if(subdirectorys.at(i)->getName()==name){
-								deleteDirectory(i);
+								boost::upgrade_to_unique_lock<boost::shared_mutex> lock2(lock1);
+								delete subdirectorys.at(i);
+								subdirectorys.erase(subdirectorys.begin()+i);
+								lock1.release();
 								return true;
 							}
 							i++;
 						}
+						lock1.release();
+
 						return false;
 					}
 					virtual bool realCache(){
@@ -221,8 +364,9 @@ namespace SchoolOS {
 					}
 					protected:
 					std::vector<File*> files;
+					boost::shared_mutex filesMutex;
 					std::vector<Directory*> subdirectorys;
-
+					boost::shared_mutex directoryMutex;
 			};
 
 		}
